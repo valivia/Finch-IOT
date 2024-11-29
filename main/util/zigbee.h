@@ -3,6 +3,11 @@
 
 #include "esp_zigbee_core.h"
 
-void add_basic_cluster(esp_zb_cluster_list_t *cluster_list, esp_zb_basic_cluster_cfg_t *basic_cfg);
+#define MANUFACTURER_NAME "\x08" \
+                          "Owl Corp"
+#define MODEL_IDENTIFIER "\x09" \
+                         "Finch 1.0"
+
+void set_endpoints();
 
 #endif

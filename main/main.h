@@ -5,11 +5,7 @@
 #define ED_AGING_TIMEOUT ESP_ZB_ED_AGING_TIMEOUT_64MIN
 #define ED_KEEP_ALIVE 3000                                               /* 3000 millisecond */
 #define ESP_ZB_PRIMARY_CHANNEL_MASK ESP_ZB_TRANSCEIVER_ALL_CHANNELS_MASK /* Zigbee primary channel mask use in the example */
-
-#define MANUFACTURER_NAME "\x08" \
-                          "Owl Corp"
-#define MODEL_IDENTIFIER "\x09" \
-                         "Finch 1.0"
+#define ZB_ENDPOINT 1
 
 #define ESP_ZB_ZED_CONFIG()                               \
     {                                                     \
@@ -24,9 +20,4 @@
 #define ESP_ZB_DEFAULT_RADIO_CONFIG()       \
     {                                       \
         .radio_mode = ZB_RADIO_MODE_NATIVE, \
-    }
-
-#define ESP_ZB_DEFAULT_HOST_CONFIG()                          \
-    {                                                         \
-        .host_connection_mode = ZB_HOST_CONNECTION_MODE_NONE, \
     }

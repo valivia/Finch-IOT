@@ -9,6 +9,7 @@
 #include "main.h"
 #include "endpoints/temperature.h"
 #include "endpoints/light.h"
+#include "util/zigbee.h"
 
 static const char *TAG = "Main";
 
@@ -106,14 +107,8 @@ static void esp_zb_task(void *pvParameters)
     esp_zb_cfg_t zb_nwk_cfg = ESP_ZB_ZED_CONFIG();
     esp_zb_init(&zb_nwk_cfg);
 
-    esp_zb_ep_list_t *endpoint_list = esp_zb_ep_list_create();
-
-    /* Create customized temperature sensor endpoint */
-    temperature_sensor_register_ep(endpoint_list);
-    light_sensor_register_ep(endpoint_list);
-
-    /* Register the device */
-    ESP_ERROR_CHECK(esp_zb_device_register(endpoint_list));
+    /* Register endpoints */
+    set_endpoints();
 
     /* Config the reporting info  */
     light_sensor_register_reporting_info();

@@ -14,7 +14,7 @@ static const char *TAG = "illuminance_zb";
 static void light_sensor_save(uint16_t value)
 {
     esp_zb_lock_acquire(portMAX_DELAY);
-    esp_zb_zcl_set_attribute_val(LIGHT_SENSOR_ENDPOINT,
+    esp_zb_zcl_set_attribute_val(ZB_ENDPOINT,
                                  ESP_ZB_ZCL_CLUSTER_ID_ILLUMINANCE_MEASUREMENT, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
                                  ESP_ZB_ZCL_ATTR_ILLUMINANCE_MEASUREMENT_MEASURED_VALUE_ID, &value, false);
     esp_zb_lock_release();
@@ -27,7 +27,7 @@ void light_sensor_report()
     report_attr_cmd.attributeID = ESP_ZB_ZCL_ATTR_ILLUMINANCE_MEASUREMENT_MEASURED_VALUE_ID;
     report_attr_cmd.direction = ESP_ZB_ZCL_CMD_DIRECTION_TO_CLI;
     report_attr_cmd.clusterID = ESP_ZB_ZCL_CLUSTER_ID_ILLUMINANCE_MEASUREMENT;
-    report_attr_cmd.zcl_basic_cmd.src_endpoint = LIGHT_SENSOR_ENDPOINT;
+    report_attr_cmd.zcl_basic_cmd.src_endpoint = ZB_ENDPOINT;
 
     esp_zb_lock_acquire(portMAX_DELAY);
 
@@ -48,7 +48,7 @@ static void light_sensor_task(void *pvParameters)
 
         /* Save light sensor value */
         uint16_t measured_value = 10000 * log10(value + 1);
-        ESP_LOGI(TAG, "value: %.02f, measured_value: %d", value, measured_value);
+        ESP_LOGD(TAG, "value: %.02f, measured_value: %d", value, measured_value);
         light_sensor_save(measured_value);
 
         vTaskDelay(LIGHT_SENSOR_UPDATE_INTERVAL * 1000 / portTICK_PERIOD_MS);
@@ -63,44 +63,29 @@ esp_err_t light_driver_init(void)
     return ESP_OK;
 }
 
-static esp_zb_cluster_list_t *light_sensor_clusters_create(esp_zb_light_sensor_cfg_t *sensor)
+void light_sensor_register_cluster(esp_zb_cluster_list_t *cluster_list)
 {
-    esp_zb_cluster_list_t *cluster_list = esp_zb_zcl_cluster_list_create();
-    add_basic_cluster(cluster_list, &(sensor->basic_cfg));
-
-    ESP_ERROR_CHECK(esp_zb_cluster_list_add_identify_cluster(cluster_list, esp_zb_identify_cluster_create(&(sensor->identify_cfg)), ESP_ZB_ZCL_CLUSTER_SERVER_ROLE));
-    ESP_ERROR_CHECK(esp_zb_cluster_list_add_identify_cluster(cluster_list, esp_zb_zcl_attr_list_create(ESP_ZB_ZCL_CLUSTER_ID_IDENTIFY), ESP_ZB_ZCL_CLUSTER_CLIENT_ROLE));
-
-    ESP_ERROR_CHECK(esp_zb_cluster_list_add_illuminance_meas_cluster(cluster_list, esp_zb_illuminance_meas_cluster_create(&(sensor->illuminance_cfg)), ESP_ZB_ZCL_CLUSTER_SERVER_ROLE));
-    return cluster_list;
-}
-
-void light_sensor_register_ep(esp_zb_ep_list_t *endpoint_list)
-{
-    esp_zb_light_sensor_cfg_t sensor_cfg = ESP_ZB_DEFAULT_CONFIGURATION_TOOL_CONFIG();
-
     /* Set (Min|Max)MeasuredValure */
-    sensor_cfg.illuminance_cfg.min_value = LIGHT_SENSOR_MIN_VALUE;
-    sensor_cfg.illuminance_cfg.max_value = LIGHT_SENSOR_MAX_VALUE;
-    sensor_cfg.illuminance_cfg.measured_value = LIGHT_SENSOR_MAX_VALUE;
+    esp_zb_illuminance_meas_cluster_cfg_t meas_cfg = {
+        .measured_value = LIGHT_SENSOR_MAX_VALUE,
+        .min_value = LIGHT_SENSOR_MIN_VALUE,
+        .max_value = LIGHT_SENSOR_MAX_VALUE,
+    };
 
-    esp_zb_endpoint_config_t endpoint_config = {
-        .endpoint = LIGHT_SENSOR_ENDPOINT,
-        .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID,
-        .app_device_id = ESP_ZB_HA_LIGHT_SENSOR_DEVICE_ID,
-        .app_device_version = 0};
+    // Add cluster
+    ESP_ERROR_CHECK(esp_zb_cluster_list_add_illuminance_meas_cluster(
+        cluster_list,
+        esp_zb_illuminance_meas_cluster_create(&meas_cfg),
+        ESP_ZB_ZCL_CLUSTER_SERVER_ROLE));
 
-    // Add the endpoint to the list
-    esp_zb_ep_list_add_ep(endpoint_list, light_sensor_clusters_create(&sensor_cfg), endpoint_config);
-
-    ESP_LOGI(TAG, "Registered zigbee endpoint");
+    ESP_LOGD(TAG, "Registered zigbee cluster");
 }
 
 void light_sensor_register_reporting_info()
 {
     esp_zb_zcl_reporting_info_t reporting_info = {
         .direction = ESP_ZB_ZCL_CMD_DIRECTION_TO_SRV,
-        .ep = LIGHT_SENSOR_ENDPOINT,
+        .ep = ZB_ENDPOINT,
         .cluster_id = ESP_ZB_ZCL_CLUSTER_ID_ILLUMINANCE_MEASUREMENT,
         .cluster_role = ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
         .dst.profile_id = ESP_ZB_AF_HA_PROFILE_ID,

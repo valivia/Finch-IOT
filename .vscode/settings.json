@@ -30,7 +30,9 @@
     "esp_zigbee_core.h": "c",
     "main.h": "c",
     "temperature.h": "c",
-    "esp_check.h": "c"
+    "esp_check.h": "c",
+    "switch_driver.h": "c",
+    "nvs_flash.h": "c"
   },
   "idf.flashType": "JTAG"
 }
