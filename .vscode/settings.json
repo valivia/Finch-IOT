@@ -1,0 +1,36 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.port": "/dev/ttyACM0",
+  "idf.adapterTargetName": "esp32c6",
+  "idf.openOcdConfigs": [
+    "board/esp32c6-builtin.cfg"
+  ],
+  "files.associations": {
+    "esp_log.h": "c",
+    "stdio.h": "c",
+    "sdkconfig.h": "c",
+    "rtc_io.h": "c",
+    "task.h": "c",
+    "i2c.h": "c",
+    "ratio": "cpp",
+    "*.tcc": "c",
+    "charconv": "c",
+    "chrono": "c",
+    "optional": "c",
+    "format": "c",
+    "system_error": "c",
+    "array": "c",
+    "functional": "c",
+    "regex": "c",
+    "tuple": "c",
+    "type_traits": "c",
+    "utility": "c",
+    "freertos.h": "c",
+    "esp_zigbee_ha_standard.h": "c",
+    "esp_zigbee_core.h": "c",
+    "main.h": "c",
+    "temperature.h": "c",
+    "esp_check.h": "c"
+  },
+  "idf.flashType": "JTAG"
+}
