@@ -5,6 +5,7 @@
 #include "util/zigbee.h"
 #include "clusters/temperature.h"
 #include "clusters/light.h"
+#include "clusters/battery.h"
 
 static const char *TAG = "Zigbee";
 
@@ -50,10 +51,18 @@ void set_endpoints()
     // Sensors
     light_sensor_register_cluster(cluster_list);
     temperature_sensor_register_cluster(cluster_list);
+    battery_sensor_register_cluster(cluster_list);
 
     // Add endpoint
     esp_zb_ep_list_add_ep(endpoint_list, cluster_list, endpoint_config);
 
     /* Register the device */
     ESP_ERROR_CHECK(esp_zb_device_register(endpoint_list));
+}
+
+void set_reporting()
+{
+    light_sensor_register_reporting_info();
+    temperature_sensor_register_reporting_info();
+    battery_sensor_register_reporting_info();
 }

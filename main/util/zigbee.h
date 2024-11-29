@@ -9,5 +9,6 @@
                          "Finch 1.0"
 
 void set_endpoints();
+void set_reporting();
 
 #endif

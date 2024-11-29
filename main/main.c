@@ -9,6 +9,7 @@
 #include "main.h"
 #include "clusters/temperature.h"
 #include "clusters/light.h"
+#include "clusters/battery.h"
 #include "util/zigbee.h"
 
 static const char *TAG = "Main";
@@ -58,6 +59,7 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
             ESP_LOGI(TAG, "Deferred driver initialization %s", deferred_driver_init() ? "failed" : "successful");
             ESP_LOGI(TAG, "Temperature driver initialization %s", temperature_driver_init() ? "failed" : "successful");
             ESP_LOGI(TAG, "Light driver initialization %s", light_driver_init() ? "failed" : "successful");
+            ESP_LOGI(TAG, "Battery driver initialization %s", battery_driver_init() ? "failed" : "successful");
             ESP_LOGI(TAG, "Device started up in %s factory-reset mode", esp_zb_bdb_is_factory_new() ? "" : "non");
             if (esp_zb_bdb_is_factory_new())
             {
@@ -111,8 +113,7 @@ static void esp_zb_task(void *pvParameters)
     set_endpoints();
 
     /* Config the reporting info  */
-    light_sensor_register_reporting_info();
-    temperature_sensor_register_reporting_info();
+    set_reporting();
 
     ESP_LOGI(TAG, "All endpoints registered");
 
