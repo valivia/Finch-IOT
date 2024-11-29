@@ -7,8 +7,8 @@
 #include "ha/esp_zigbee_ha_standard.h"
 
 #include "main.h"
-#include "endpoints/temperature.h"
-#include "endpoints/light.h"
+#include "clusters/temperature.h"
+#include "clusters/light.h"
 #include "util/zigbee.h"
 
 static const char *TAG = "Main";

@@ -3,8 +3,8 @@
 #include "esp_check.h"
 
 #include "util/zigbee.h"
-#include "endpoints/temperature.h"
-#include "endpoints/light.h"
+#include "clusters/temperature.h"
+#include "clusters/light.h"
 
 static const char *TAG = "Zigbee";
 
