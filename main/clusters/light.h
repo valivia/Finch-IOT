@@ -9,7 +9,6 @@
 
 // Functions
 void light_sensor_report();
-esp_err_t light_driver_init(void);
 void light_sensor_register_cluster(esp_zb_cluster_list_t *cluster_list);
 void light_sensor_register_reporting_info();
 

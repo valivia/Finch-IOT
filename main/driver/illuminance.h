@@ -5,6 +5,8 @@
 #include "sdkconfig.h"
 #include "esp_err.h"
 
+#define BH1750_POWER_PIN 16
+
 #define BH1750_SENSOR_ADDR CONFIG_BH1750_ADDR /*!< slave address for BH1750 sensor */
 #define BH1750_CMD_START CONFIG_BH1750_OPMODE /*!< Operation mode */
 #define WRITE_BIT I2C_MASTER_WRITE            /*!< I2C write */
@@ -22,6 +24,5 @@
 #define I2C_RX_BUF_DISABLE 0
 
 // Functions
-
-esp_err_t BH1750_initiate_i2c(void);
-void get_illuminance_reading(double *lux);
+esp_err_t illuminance_driver_init();
+void get_illuminance_reading(uint16_t *illuminance);

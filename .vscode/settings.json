@@ -35,7 +35,23 @@
     "nvs_flash.h": "c",
     "adc.h": "c",
     "battery_adc.h": "c",
-    "esp_zigbee_zcl_power_config.h": "c"
+    "esp_zigbee_zcl_power_config.h": "c",
+    "adc_cali_scheme.h": "c",
+    "gpio.h": "c",
+    "esp_timer.h": "c",
+    "time.h": "c",
+    "zigbee.h": "c",
+    "temp.h": "c",
+    "battery.h": "c"
   },
-  "idf.flashType": "JTAG"
+  "idf.flashType": "JTAG",
+  "idf.espIdfPath": "/home/owl/esp/v5.2.1/esp-idf",
+  "idf.pythonBinPath": "/home/owl/.espressif/python_env/idf5.2_py3.11_env/bin/python",
+  "idf.toolsPath": "/home/owl/.espressif",
+  "idf.customExtraPaths": "/home/owl/.espressif/tools/xtensa-esp-elf-gdb/12.1_20231023/xtensa-esp-elf-gdb/bin:/home/owl/.espressif/tools/riscv32-esp-elf-gdb/12.1_20231023/riscv32-esp-elf-gdb/bin:/home/owl/.espressif/tools/xtensa-esp-elf/esp-13.2.0_20230928/xtensa-esp-elf/bin:/home/owl/.espressif/tools/riscv32-esp-elf/esp-13.2.0_20230928/riscv32-esp-elf/bin:/home/owl/.espressif/tools/esp32ulp-elf/2.35_20220830/esp32ulp-elf/bin:/home/owl/.espressif/tools/cmake/3.24.0/bin:/home/owl/.espressif/tools/openocd-esp32/v0.12.0-esp32-20230921/openocd-esp32/bin:/home/owl/.espressif/tools/ninja/1.11.1:/home/owl/.espressif/tools/esp-rom-elfs/20230320",
+  "idf.customExtraVars": {
+    "OPENOCD_SCRIPTS": "/home/owl/.espressif/tools/openocd-esp32/v0.12.0-esp32-20230921/openocd-esp32/share/openocd/scripts",
+    "ESP_ROM_ELF_DIR": "/home/owl/.espressif/tools/esp-rom-elfs/20230320/"
+  },
+  "idf.gitPath": "/usr/bin/git"
 }

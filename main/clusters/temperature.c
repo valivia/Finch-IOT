@@ -10,22 +10,15 @@
 
 static const char *TAG = "Temp_zb";
 
-float last_temperature = 0;
-
-static int16_t temperature_to_s16(float temp)
-{
-    return (int16_t)(temp * 100);
-}
+int16_t temperature = 0;
 
 /* Update temperature sensor measured value */
-static void temperature_sensor_handler(float temperature)
+static void temperature_sensor_save(int16_t temperature)
 {
-    last_temperature = temperature;
-    int16_t measured_value = temperature_to_s16(temperature);
     esp_zb_lock_acquire(portMAX_DELAY);
     esp_zb_zcl_set_attribute_val(ZB_ENDPOINT,
                                  ESP_ZB_ZCL_CLUSTER_ID_TEMP_MEASUREMENT, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
-                                 ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &measured_value, false);
+                                 ESP_ZB_ZCL_ATTR_TEMP_MEASUREMENT_VALUE_ID, &temperature, false);
     esp_zb_lock_release();
 }
 
@@ -45,22 +38,14 @@ void temperature_sensor_report()
     ESP_EARLY_LOGI(TAG, "Sent 'report attributes' command");
 }
 
-esp_err_t temperature_driver_init(void)
-{
-    temperature_sensor_config_t temp_sensor_config =
-        TEMPERATURE_SENSOR_CONFIG_DEFAULT(TEMP_SENSOR_MIN_VALUE, TEMP_SENSOR_MAX_VALUE);
-    ESP_RETURN_ON_ERROR(temp_sensor_driver_init(&temp_sensor_config, TEMP_SENSOR_UPDATE_INTERVAL, temperature_sensor_handler), TAG,
-                        "Failed to initialize temperature sensor");
-    return ESP_OK;
-}
-
 void temperature_sensor_register_cluster(esp_zb_cluster_list_t *cluster_list)
 {
+    get_temperature_readings(&temperature);
     /* Set (Min|Max)MeasuredValure */
     esp_zb_temperature_meas_cluster_cfg_t meas_cfg = {
-        .measured_value = temperature_to_s16(TEMP_SENSOR_MAX_VALUE),
-        .min_value = temperature_to_s16(TEMP_SENSOR_MIN_VALUE),
-        .max_value = temperature_to_s16(TEMP_SENSOR_MAX_VALUE),
+        .measured_value = temperature,
+        .min_value = ((int16_t)TEMP_SENSOR_MIN_VALUE) * 100,
+        .max_value = ((int16_t)TEMP_SENSOR_MAX_VALUE) * 100,
     };
 
     // Add cluster
@@ -69,7 +54,7 @@ void temperature_sensor_register_cluster(esp_zb_cluster_list_t *cluster_list)
         esp_zb_temperature_meas_cluster_create(&meas_cfg),
         ESP_ZB_ZCL_CLUSTER_SERVER_ROLE));
 
-    ESP_LOGD(TAG, "Registered zigbee cluster");
+    ESP_LOGI(TAG, "Registered zigbee cluster");
 }
 
 void temperature_sensor_register_reporting_info()

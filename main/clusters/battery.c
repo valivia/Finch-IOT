@@ -9,10 +9,10 @@
 #include "util/zigbee.h"
 #include "main.h"
 
-static const char *TAG = "illuminance_zb";
+static const char *TAG = "Battery_zb";
 
-float battery_percentage = 0;
-float battery_voltage = 0;
+static uint16_t battery_voltage = 0;
+static double battery_percentage = 0;
 
 /* Update sensor measured values */
 static void battery_sensor_save()
@@ -48,36 +48,29 @@ void battery_sensor_report()
     ESP_EARLY_LOGI(TAG, "Sent 'report attributes' command");
 }
 
-esp_err_t battery_driver_init()
-{
-    get_battery_percentage(&battery_percentage, &battery_voltage);
-
-    ESP_LOGI(TAG, "Battery voltage: %.2f V, Battery percentage: %.2f %%", battery_voltage, battery_percentage);
-
-    battery_sensor_save();
-
-    return ESP_OK;
-}
-
 void battery_sensor_register_cluster(esp_zb_cluster_list_t *cluster_list)
 {
+    get_battery_readings(&battery_voltage, &battery_percentage);
     uint8_t battery_percentage_attr = (uint8_t)battery_percentage;
     uint8_t battery_voltage_attr = (uint8_t)battery_voltage;
 
     uint8_t battery_size_attr = ESP_ZB_ZCL_POWER_CONFIG_BATTERY_SIZE_BUILT_IN;
-    uint8_t battery_rated_voltage = (uint8_t)(BATTERY_VOLTAGE_NOMINAL * 10);
+    uint8_t battery_rated_voltage = (uint8_t)(BATTERY_VOLTAGE_NOMINAL_MILLIVOLT * 10);
     // add battery % attribute + cluster
     esp_zb_attribute_list_t *esp_zb_power_config_cluster = esp_zb_zcl_attr_list_create(ESP_ZB_ZCL_CLUSTER_ID_POWER_CONFIG);
 
     esp_zb_power_config_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_PERCENTAGE_REMAINING_ID, &battery_percentage_attr);
+    ESP_LOGI(TAG, "Battery percentage: %d", battery_percentage_attr);
     esp_zb_power_config_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_ID, &battery_voltage_attr);
+    ESP_LOGI(TAG, "Battery voltage: %d", battery_voltage_attr);
     esp_zb_power_config_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_SIZE_ID, &battery_size_attr);
-    esp_zb_power_config_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_ALARM_MASK_ID, ESP_ZB_ZCL_POWER_CONFIG_BATTERY_ALARM_MASK_VOLTAGE_LOW);
+    ESP_LOGI(TAG, "Battery size: %d", battery_size_attr);
     esp_zb_power_config_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_RATED_VOLTAGE_ID, &battery_rated_voltage);
+    ESP_LOGI(TAG, "Battery rated voltage: %d", battery_rated_voltage);
 
     esp_zb_cluster_list_add_power_config_cluster(cluster_list, esp_zb_power_config_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
 
-    ESP_LOGD(TAG, "Registered zigbee cluster");
+    ESP_LOGI(TAG, "Registered zigbee cluster");
 }
 
 void battery_sensor_register_reporting_info()

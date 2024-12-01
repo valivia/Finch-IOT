@@ -10,6 +10,8 @@
 
 static const char *TAG = "illuminance_zb";
 
+static uint16_t illuminance = 0;
+
 /* Update light sensor measured value */
 static void light_sensor_save(uint16_t value)
 {
@@ -38,36 +40,14 @@ void light_sensor_report()
     ESP_EARLY_LOGI(TAG, "Sent 'report attributes' command");
 }
 
-static void light_sensor_task(void *pvParameters)
-{
-    while (1)
-    {
-        double value = 0;
-        /* Read light sensor value */
-        get_illuminance_reading(&value);
-
-        /* Save light sensor value */
-        uint16_t measured_value = 10000 * log10(value + 1);
-        ESP_LOGD(TAG, "value: %.02f, measured_value: %d", value, measured_value);
-        light_sensor_save(measured_value);
-
-        vTaskDelay(LIGHT_SENSOR_UPDATE_INTERVAL * 1000 / portTICK_PERIOD_MS);
-    }
-}
-
-esp_err_t light_driver_init(void)
-{
-    ESP_RETURN_ON_ERROR(BH1750_initiate_i2c(), TAG, "Failed to initialize light sensor");
-    xTaskCreate(light_sensor_task, "light_read", 4096, NULL, 1, NULL);
-    ESP_LOGI(TAG, "Light sensor driver initialized");
-    return ESP_OK;
-}
-
 void light_sensor_register_cluster(esp_zb_cluster_list_t *cluster_list)
 {
+    /* Get light sensor reading */
+    get_illuminance_reading(&illuminance);
+
     /* Set (Min|Max)MeasuredValure */
     esp_zb_illuminance_meas_cluster_cfg_t meas_cfg = {
-        .measured_value = LIGHT_SENSOR_MAX_VALUE,
+        .measured_value = illuminance,
         .min_value = LIGHT_SENSOR_MIN_VALUE,
         .max_value = LIGHT_SENSOR_MAX_VALUE,
     };
@@ -78,7 +58,7 @@ void light_sensor_register_cluster(esp_zb_cluster_list_t *cluster_list)
         esp_zb_illuminance_meas_cluster_create(&meas_cfg),
         ESP_ZB_ZCL_CLUSTER_SERVER_ROLE));
 
-    ESP_LOGD(TAG, "Registered zigbee cluster");
+    ESP_LOGI(TAG, "Registered zigbee cluster");
 }
 
 void light_sensor_register_reporting_info()

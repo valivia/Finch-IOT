@@ -7,6 +7,10 @@
 #define ESP_ZB_PRIMARY_CHANNEL_MASK ESP_ZB_TRANSCEIVER_ALL_CHANNELS_MASK /* Zigbee primary channel mask use in the example */
 #define ZB_ENDPOINT 1
 
+#define LED_PIN 15
+
+#define IS_PRODUCTION 1
+
 #define ESP_ZB_ZED_CONFIG()                               \
     {                                                     \
         .esp_zb_role = ESP_ZB_DEVICE_TYPE_ED,             \
