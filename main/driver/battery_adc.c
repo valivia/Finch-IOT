@@ -86,6 +86,12 @@ static void initialize_adc()
     }
 }
 
+static void deinitialize_adc()
+{
+    ESP_LOGI(TAG, "deregister %s calibration scheme", "Curve Fitting");
+    ESP_ERROR_CHECK(adc_cali_delete_scheme_curve_fitting(adc_cali_handle));
+}
+
 static void read_voltage()
 {
     gpio_set_direction(BATTERY_READ_PIN, GPIO_MODE_OUTPUT);
@@ -95,7 +101,7 @@ static void read_voltage()
     ESP_ERROR_CHECK(adc_oneshot_read(adc_handle, ADC_CHANNEL, &raw_voltage));
     ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc_cali_handle, raw_voltage, &calibrated_voltage));
 
-    ESP_LOGD(TAG, "ADC Raw: %d, Calibrated: %d", raw_voltage, calibrated_voltage);
+    ESP_LOGI(TAG, "ADC Raw: %d, Calibrated: %d", raw_voltage, calibrated_voltage);
 
     gpio_set_level(BATTERY_READ_PIN, 0);
 }
@@ -123,6 +129,8 @@ esp_err_t battery_driver_init()
     percentage = calculate_battery_percentage(voltage);
 
     ESP_LOGI(TAG, "Initialized, percentage: %f, mv: %d, raw: %d", percentage, voltage, calibrated_voltage);
+
+    deinitialize_adc();
 
     return ESP_OK;
 }

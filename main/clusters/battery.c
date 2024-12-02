@@ -51,22 +51,24 @@ void battery_sensor_report()
 void battery_sensor_register_cluster(esp_zb_cluster_list_t *cluster_list)
 {
     get_battery_readings(&battery_voltage, &battery_percentage);
-    uint8_t battery_percentage_attr = (uint8_t)battery_percentage;
-    uint8_t battery_voltage_attr = (uint8_t)battery_voltage;
+    uint8_t battery_percentage_attr = ((uint8_t)battery_percentage) * 2;
+    uint8_t battery_voltage_attr = (uint8_t)(battery_voltage / 100);
 
     uint8_t battery_size_attr = ESP_ZB_ZCL_POWER_CONFIG_BATTERY_SIZE_BUILT_IN;
-    uint8_t battery_rated_voltage = (uint8_t)(BATTERY_VOLTAGE_NOMINAL_MILLIVOLT * 10);
+    uint8_t battery_rated_voltage = (uint8_t)(BATTERY_VOLTAGE_NOMINAL_MILLIVOLT / 100);
+
     // add battery % attribute + cluster
     esp_zb_attribute_list_t *esp_zb_power_config_cluster = esp_zb_zcl_attr_list_create(ESP_ZB_ZCL_CLUSTER_ID_POWER_CONFIG);
 
+    // Information
     esp_zb_power_config_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_PERCENTAGE_REMAINING_ID, &battery_percentage_attr);
     ESP_LOGI(TAG, "Battery percentage: %d", battery_percentage_attr);
     esp_zb_power_config_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_VOLTAGE_ID, &battery_voltage_attr);
     ESP_LOGI(TAG, "Battery voltage: %d", battery_voltage_attr);
+
+    // Settings
     esp_zb_power_config_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_SIZE_ID, &battery_size_attr);
-    ESP_LOGI(TAG, "Battery size: %d", battery_size_attr);
     esp_zb_power_config_cluster_add_attr(esp_zb_power_config_cluster, ESP_ZB_ZCL_ATTR_POWER_CONFIG_BATTERY_RATED_VOLTAGE_ID, &battery_rated_voltage);
-    ESP_LOGI(TAG, "Battery rated voltage: %d", battery_rated_voltage);
 
     esp_zb_cluster_list_add_power_config_cluster(cluster_list, esp_zb_power_config_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
 

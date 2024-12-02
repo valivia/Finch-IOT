@@ -1,17 +1,3 @@
-/*
- * SPDX-FileCopyrightText: 2024 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: CC0-1.0
- *
- * Zigbee temperature sensor driver example
- *
- * This example code is in the Public Domain (or CC0 licensed, at your option.)
- *
- * Unless required by applicable law or agreed to in writing, this
- * software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
- * CONDITIONS OF ANY KIND, either express or implied.
- */
-
 #include "temp.h"
 
 #include "esp_err.h"
@@ -35,16 +21,26 @@ esp_err_t temperature_driver_init()
 {
     temperature_sensor_config_t config = TEMPERATURE_SENSOR_CONFIG_DEFAULT(TEMP_SENSOR_MIN_VALUE, TEMP_SENSOR_MAX_VALUE);
 
+    // Install
     ESP_RETURN_ON_ERROR(
         temperature_sensor_install(&config, &temp_sensor),
         TAG,
         "Fail to install on-chip temperature sensor");
+
+    // Enable
     ESP_RETURN_ON_ERROR(
         temperature_sensor_enable(temp_sensor),
         TAG,
         "Fail to enable on-chip temperature sensor");
 
+    // Read
     read_temperature(&temperature_value);
+
+    // Disable
+    ESP_RETURN_ON_ERROR(
+        temperature_sensor_disable(temp_sensor),
+        TAG,
+        "Fail to disable on-chip temperature sensor");
 
     ESP_LOGI(TAG, "Initialized, Temperature: %d", temperature_value);
 

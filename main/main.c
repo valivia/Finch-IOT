@@ -164,11 +164,11 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
             {
                 join_attempts++;
                 ESP_LOGI(TAG, "Retry network steering");
-                esp_zb_bdb_start_top_level_commissioning(ESP_ZB_BDB_MODE_NETWORK_STEERING);
+                esp_zb_scheduler_alarm((esp_zb_callback_t)bdb_start_top_level_commissioning_cb, ESP_ZB_BDB_MODE_NETWORK_STEERING, 1000);
             }
             else
             {
-                ESP_LOGI(TAG, "Join attempts exceeded, enter deep sleep");
+                ESP_LOGW(TAG, "Join attempts exceeded, enter deep sleep");
                 s_oneshot_timer_callback(NULL);
             }
         }
