@@ -3,7 +3,6 @@
 #include "esp_check.h"
 
 #include "util/zigbee.h"
-#include "clusters/temperature.h"
 #include "clusters/light.h"
 #include "clusters/battery.h"
 
@@ -50,7 +49,6 @@ void set_endpoints()
 
     // Sensors
     light_sensor_register_cluster(cluster_list);
-    temperature_sensor_register_cluster(cluster_list);
     battery_sensor_register_cluster(cluster_list);
 
     // Add endpoint
@@ -63,6 +61,5 @@ void set_endpoints()
 void set_reporting()
 {
     light_sensor_register_reporting_info();
-    temperature_sensor_register_reporting_info();
     battery_sensor_register_reporting_info();
 }

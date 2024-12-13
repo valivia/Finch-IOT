@@ -14,13 +14,11 @@
 #include "main.h"
 
 // Clusters
-#include "clusters/temperature.h"
 #include "clusters/light.h"
 #include "clusters/battery.h"
 
 // Sensor drivers
 #include "driver/switch_driver.h"
-#include "driver/temp.h"
 #include "driver/illuminance.h"
 #include "driver/battery_adc.h"
 
@@ -31,25 +29,56 @@ static const char *TAG = "Main";
 static RTC_DATA_ATTR struct timeval s_sleep_enter_time;
 static esp_timer_handle_t s_oneshot_timer;
 
-const int wakeup_time_sec = IS_PRODUCTION ? 5 * 60 : 10;
+static int wakeup_time_sec = IS_PRODUCTION ? 5 * 60 : 10;
 
 static bool first_boot = false;
+static bool keep_on = false;
 static uint8_t join_attempts = 0;
 
-// Sleep
-static void s_oneshot_timer_callback(void *arg)
+#define SENSOR_READINGS_COUNT 10
+static RTC_DATA_ATTR uint16_t light_sensor_readings[SENSOR_READINGS_COUNT] = {-1, -1, -1, -1, -1};
+static RTC_DATA_ATTR uint16_t current_sensor_reading_index = 0;
+
+static int get_new_index(int change, int current_index, int array_size)
 {
-    /* Enter deep sleep */
-    ESP_LOGI(TAG, "Enter deep sleep");
+    int new_index = (current_index + change) % array_size;
+    if (new_index < 0)
+    {
+        new_index += array_size;
+    }
+    return new_index;
+}
+
+// Sleep
+static void deep_sleep_start(void *arg)
+{
+    if (keep_on)
+    {
+        ESP_LOGI(TAG, "Keep on, not entering deep sleep");
+        return;
+    }
+
+    // Start deep sleep timer
+    ESP_LOGI(TAG, "Entering deep sleep for %ds\n", wakeup_time_sec);
+    ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000));
+
+    // Store the time when entering deep sleep
     gettimeofday(&s_sleep_enter_time, NULL);
+
+    // Turn off LED
     gpio_set_direction(GPIO_MODE_DISABLE, LED_PIN);
+
+    // Increment sensor reading index
+    current_sensor_reading_index = get_new_index(1, current_sensor_reading_index, SENSOR_READINGS_COUNT);
+
+    // Enter deep sleep
     esp_deep_sleep_start();
 }
 
 static void zb_deep_sleep_init(void)
 {
     const esp_timer_create_args_t s_oneshot_timer_args = {
-        .callback = &s_oneshot_timer_callback,
+        .callback = &deep_sleep_start,
         .name = "one-shot"};
 
     ESP_ERROR_CHECK(esp_timer_create(&s_oneshot_timer_args, &s_oneshot_timer));
@@ -76,13 +105,9 @@ static void zb_deep_sleep_init(void)
         ESP_LOGI(TAG, "Not a deep sleep reset");
         break;
     }
-
-    /* 1. RTC timer waking-up */
-    ESP_LOGI(TAG, "Enabling timer wakeup, %ds\n", wakeup_time_sec);
-    ESP_ERROR_CHECK(esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000));
 }
 
-static void zb_deep_sleep_start(void)
+static void deep_sleep_timer_start(void)
 {
     int before_deep_sleep_time_sec = 5;
 
@@ -104,9 +129,12 @@ static void esp_app_buttons_handler(switch_func_pair_t *button_func_pair)
 {
     if (button_func_pair->func == SWITCH_ONOFF_TOGGLE_CONTROL)
     {
-        ESP_LOGI(TAG, "Toggle button pressed");
-        temperature_sensor_report();
-        light_sensor_report();
+        if (keep_on)
+        {
+            deep_sleep_timer_start();
+        }
+
+        keep_on = !keep_on;
     }
 }
 
@@ -119,7 +147,6 @@ static void bdb_start_top_level_commissioning_cb(uint8_t mode_mask)
 // Main
 void report_all_sensors()
 {
-    temperature_sensor_report();
     light_sensor_report();
     battery_sensor_report();
 }
@@ -152,7 +179,7 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
             else
             {
                 report_all_sensors();
-                zb_deep_sleep_start();
+                deep_sleep_timer_start();
             }
         }
         else
@@ -169,7 +196,7 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
             else
             {
                 ESP_LOGW(TAG, "Join attempts exceeded, enter deep sleep");
-                s_oneshot_timer_callback(NULL);
+                deep_sleep_start(NULL);
             }
         }
         break;
@@ -182,7 +209,7 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
                      extended_pan_id[7], extended_pan_id[6], extended_pan_id[5], extended_pan_id[4],
                      extended_pan_id[3], extended_pan_id[2], extended_pan_id[1], extended_pan_id[0],
                      esp_zb_get_pan_id(), esp_zb_get_current_channel(), esp_zb_get_short_address());
-            zb_deep_sleep_start();
+            deep_sleep_timer_start();
         }
         else
         {
@@ -202,11 +229,27 @@ static void esp_zb_task(void *pvParameters)
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     // Read all sensors
-    temperature_driver_init();
     battery_driver_init();
     illuminance_driver_init();
-
     switch_driver_init(button_func_pair, PAIR_SIZE(button_func_pair), esp_app_buttons_handler);
+
+    // Store illuminance reading in array;
+    get_illuminance_reading(&light_sensor_readings[current_sensor_reading_index]);
+
+    bool same_as_previous = light_sensor_readings[current_sensor_reading_index] == light_sensor_readings[get_new_index(-1, current_sensor_reading_index, SENSOR_READINGS_COUNT)];
+
+    // If the illuminance readings are the same as the previous reading, enter deep sleep
+    if (same_as_previous)
+    {
+        bool is_trend = light_sensor_readings[current_sensor_reading_index] == light_sensor_readings[get_new_index(-2, current_sensor_reading_index, SENSOR_READINGS_COUNT)];
+
+        if (is_trend)
+            wakeup_time_sec = 15 * 60;
+
+        ESP_LOGI(TAG, "Illuminance readings are the same, entering %s deep sleep", is_trend ? "extended" : "normal");
+        deep_sleep_start(NULL);
+        return;
+    }
 
     /* Initialize Zigbee stack */
     esp_zb_cfg_t zb_nwk_cfg = ESP_ZB_ZED_CONFIG();
